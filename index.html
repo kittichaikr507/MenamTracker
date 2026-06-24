@@ -51,12 +51,6 @@
   
   .icon-btn { width: 40px; height: 40px; border-radius: var(--radius-md); display: grid; place-items: center; color: var(--ink-2); border: 1px solid var(--border); background: var(--surface); transition: .15s; }
   .icon-btn:hover { background: var(--surface-2); border-color: var(--border-strong); color: var(--primary); }
-  
-  /* Language toggle button */
-  .lang-toggle { display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; border-radius: var(--radius-pill); font-weight: 600; font-size: 13px; background: var(--surface); border: 1px solid var(--border-strong); color: var(--ink); transition: .15s; white-space: nowrap; }
-  .lang-toggle:hover { background: var(--primary-tint); border-color: var(--primary); color: var(--primary); box-shadow: 0 2px 8px rgba(0,117,222,0.15); }
-  .lang-toggle svg { width: 16px; height: 16px; }
-  .lang-toggle .lang-label { min-width: 24px; text-align: center; }
   .btn { display: inline-flex; align-items: center; gap: 7px; padding: 10px 16px; border-radius: var(--radius-pill); font-weight: 500; font-size: 14px; transition: .15s; white-space: nowrap; }
   .btn-primary { background: var(--primary); color: #fff; box-shadow: none; }
   .btn-primary:hover { background: var(--primary-dark); }
@@ -578,10 +572,6 @@
     <div><h1>Project Tracker</h1><small>Smart Factory 4.0</small></div>
   </div>
   <div class="spacer"></div>
-  <button class="lang-toggle" id="langToggle" title="เปลี่ยนภาษา">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
-    <span class="lang-label">EN</span>
-  </button>
   <div class="search">
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
     <input id="search" placeholder="ค้นหาโครงการ/งาน...">
@@ -692,7 +682,7 @@
       <div class="field" data-for="project task">
         <label>สถานะ</label>
         <select id="f-status">
-          <option value="planning">รอดำเนินการ</option>
+          <option value="planning">วางแผน</option>
           <option value="in-progress" selected>กำลังดำเนินการ</option>
           <option value="on-hold">พักงาน</option>
           <option value="completed">เสร็จสิ้น</option>
@@ -863,7 +853,7 @@ const state = {
 
 let prEditId=null, prLines=[], prPoDates={};
 
-const STATUS = { 'planning':{th:'รอดำเนินการ',cls:'planning'}, 'in-progress':{th:'กำลังดำเนินการ',cls:'in-progress'}, 'on-hold':{th:'พักงาน',cls:'on-hold'}, 'completed':{th:'เสร็จสิ้น',cls:'completed'} };
+const STATUS = { 'planning':{th:'วางแผน',cls:'planning'}, 'in-progress':{th:'กำลังดำเนินการ',cls:'in-progress'}, 'on-hold':{th:'พักงาน',cls:'on-hold'}, 'completed':{th:'เสร็จสิ้น',cls:'completed'} };
 const STATUS_ORDER = ['planning','in-progress','on-hold','completed'];
 const PR_STATUS={ 'draft':{th:'ร่าง',c:'var(--plan)'}, 'submitted':{th:'รออนุมัติ',c:'var(--prog)'}, 'approved':{th:'อนุมัติแล้ว',c:'var(--primary)'}, 'ordered':{th:'สั่งซื้อแล้ว',c:'var(--event)'}, 'received':{th:'รับของแล้ว',c:'var(--done)'}, 'rejected':{th:'ไม่อนุมัติ',c:'var(--danger)'} };
 const PR_ORDER=['draft','submitted','approved','ordered','received','rejected'];
@@ -974,42 +964,33 @@ function renderOverview() {
   }
 
   let html = '';
-  const t = translations[currentLang] || translations.th;
   html += '<div class="statgroups">';
   html += '  <div class="sg-card">';
-  html += '    <div class="sg-head"><span class="sg-ic ic-proj">📁</span><h3>' + t.stat_projects + ownLabel + '</h3></div>';
+  html += '    <div class="sg-head"><span class="sg-ic ic-proj">📁</span><h3>สถิติโครงการ' + ownLabel + '</h3></div>';
   html += '    <div class="sg-grid">';
-  html += '      <div class="sg-tile t-all" onclick="openDetails(\'project\', \'all\')"><div class="sg-num">' + pStat.all + '</div><div class="sg-lbl">' + t.all + '</div></div>';
-  html += '      <div class="sg-tile t-done" onclick="openDetails(\'project\', \'done\')"><div class="sg-num">' + pStat.done + '</div><div class="sg-lbl">' + t.done + '</div></div>';
-  html += '      <div class="sg-tile t-prog" onclick="openDetails(\'project\', \'prog\')"><div class="sg-num">' + pStat.prog + '</div><div class="sg-lbl">' + t.in_progress + '</div></div>';
-  html += '      <div class="sg-tile t-wait" onclick="openDetails(\'project\', \'wait\')"><div class="sg-num">' + pStat.wait + '</div><div class="sg-lbl">' + t.waiting + '</div></div>';
+  html += '      <div class="sg-tile t-all" onclick="openDetails(\'project\', \'all\')"><div class="sg-num">' + pStat.all + '</div><div class="sg-lbl">ทั้งหมด</div></div>';
+  html += '      <div class="sg-tile t-done" onclick="openDetails(\'project\', \'done\')"><div class="sg-num">' + pStat.done + '</div><div class="sg-lbl">เสร็จแล้ว</div></div>';
+  html += '      <div class="sg-tile t-prog" onclick="openDetails(\'project\', \'prog\')"><div class="sg-num">' + pStat.prog + '</div><div class="sg-lbl">กำลังทำ</div></div>';
+  html += '      <div class="sg-tile t-wait" onclick="openDetails(\'project\', \'wait\')"><div class="sg-num">' + pStat.wait + '</div><div class="sg-lbl">รอดำเนินการ</div></div>';
   html += '    </div>';
   html += '  </div>';
   html += '  <div class="sg-card">';
-  html += '    <div class="sg-head"><span class="sg-ic ic-task">✓</span><h3>' + t.stat_tasks + ownLabel + '</h3></div>';
+  html += '    <div class="sg-head"><span class="sg-ic ic-task">✓</span><h3>สถิติงานย่อย' + ownLabel + '</h3></div>';
   html += '    <div class="sg-grid sg-grid-5">';
-  html += '      <div class="sg-tile t-all" onclick="openDetails(\'task\', \'all\')"><div class="sg-num">' + tStat.all + '</div><div class="sg-lbl">' + t.all + '</div></div>';
-  html += '      <div class="sg-tile t-done" onclick="openDetails(\'task\', \'done\')"><div class="sg-num">' + tStat.done + '</div><div class="sg-lbl">' + t.done + '</div></div>';
-  html += '      <div class="sg-tile t-prog" onclick="openDetails(\'task\', \'prog\')"><div class="sg-num">' + tStat.prog + '</div><div class="sg-lbl">' + t.in_progress + '</div></div>';
-  html += '      <div class="sg-tile t-wait" onclick="openDetails(\'task\', \'wait\')"><div class="sg-num">' + tStat.wait + '</div><div class="sg-lbl">' + t.waiting + '</div></div>';
-  html += '      <div class="sg-tile t-over" onclick="openDetails(\'task\', \'overdue\')"><div class="sg-num">' + overdue + '</div><div class="sg-lbl">' + t.overdue + '</div></div>';
+  html += '      <div class="sg-tile t-all" onclick="openDetails(\'task\', \'all\')"><div class="sg-num">' + tStat.all + '</div><div class="sg-lbl">ทั้งหมด</div></div>';
+  html += '      <div class="sg-tile t-done" onclick="openDetails(\'task\', \'done\')"><div class="sg-num">' + tStat.done + '</div><div class="sg-lbl">เสร็จแล้ว</div></div>';
+  html += '      <div class="sg-tile t-prog" onclick="openDetails(\'task\', \'prog\')"><div class="sg-num">' + tStat.prog + '</div><div class="sg-lbl">กำลังทำ</div></div>';
+  html += '      <div class="sg-tile t-wait" onclick="openDetails(\'task\', \'wait\')"><div class="sg-num">' + tStat.wait + '</div><div class="sg-lbl">รอดำเนินการ</div></div>';
+  html += '      <div class="sg-tile t-over" onclick="openDetails(\'task\', \'overdue\')"><div class="sg-num">' + overdue + '</div><div class="sg-lbl">เกินกำหนด</div></div>';
   html += '    </div>';
   html += '  </div>';
   html += '</div>';
 
   html += '<div class="ov-toolbar">';
-  const t = translations[currentLang] || translations.th;
-  html += '  <span class="ov-vlabel">' + t.perspective + '</span>';
+  html += '  <span class="ov-vlabel">มุมมอง</span>';
   html += '  <div class="seg-lg view-seg">';
   
-  const views = [
-    ['list', t.view_list],
-    ['board', t.view_board],
-    ['timebox', t.view_timebox],
-    ['gantt', t.view_gantt],
-    ['calendar', t.view_calendar],
-    ['pr', t.view_pr]
-  ];
+  const views = [['list','📋 รายการ'],['board','🗂 บอร์ด'],['timebox','⏱️ Timebox'],['gantt','📊 Gantt'],['calendar','📅 ปฏิทิน'],['pr','📦 PR']];
   views.forEach(v => {
       const activeStr = mode === v[0] ? 'active' : '';
       html += '<button class="' + activeStr + '" onclick="setOv(\'mode\',\'' + v[0] + '\')">' + v[1] + '</button>';
@@ -1564,7 +1545,7 @@ function renderGantt(){
   
   // ✨ แสดง Filter Bar + Gantt Chart
   ghtml = filterHtml + ghtml + '<div class="gantt-wrap"><div class="gantt-scroll"><div class="gantt">' + qBand + header + '<div class="g-body">' + rows + '</div></div></div></div>';
-  ghtml += '<div class="cal-legend"><span><i style="background:var(--plan)"></i> กำลังดำเนินการ</span><span><i style="background:var(--prog)"></i> กำลังดำเนินการ</span><span><i style="background:var(--hold)"></i> พักงาน</span><span><i style="background:var(--done)"></i> เสร็จสิ้น</span><span style="color:var(--danger)">| เส้นวันนี้</span>' + (isAllYear ? '' : '<span style="color:var(--faint)">💡 นำเมาส์ชี้ที่ W เพื่อดูวันที่เริ่มต้นของสัปดาห์</span>') + '</div>';
+  ghtml += '<div class="cal-legend"><span><i style="background:var(--plan)"></i> วางแผน</span><span><i style="background:var(--prog)"></i> กำลังดำเนินการ</span><span><i style="background:var(--hold)"></i> พักงาน</span><span><i style="background:var(--done)"></i> เสร็จสิ้น</span><span style="color:var(--danger)">| เส้นวันนี้</span>' + (isAllYear ? '' : '<span style="color:var(--faint)">💡 นำเมาส์ชี้ที่ W เพื่อดูวันที่เริ่มต้นของสัปดาห์</span>') + '</div>';
   
   $('#ovContent').innerHTML = ghtml;
 }
@@ -1650,166 +1631,6 @@ function navTo(view) {
   setOv('mode', view);
   updateMobileNav(view);
 }
-
-// ========== Language Toggle System ==========
-const translations = {
-  th: {
-    appTitle: 'Project Tracker',
-    appSubtitle: 'Smart Factory 4.0',
-    searchPlaceholder: 'ค้นหาโครงการ/งาน...',
-    refreshTitle: 'โหลดข้อมูลใหม่',
-    addNew: 'เพิ่มใหม่',
-    projects: 'โครงการ',
-    upcoming: 'ที่กำลังจะเกิดขึ้น',
-    overview: 'ภาพรวม',
-    kanban: 'Kanban',
-    gantt: 'Gantt',
-    status_planning: 'วางแผน',
-    status_in_progress: 'ดำเนินการ',
-    status_on_hold: 'ระงับ',
-    status_completed: 'เสร็จสิ้น',
-    noProjects: 'ไม่มีโครงการ',
-    noUpcoming: 'ไม่มีกิจกรรมที่กำลังจะเกิดขึ้น',
-    priority_high: 'สูง',
-    priority_medium: 'กลาง',
-    priority_low: 'ต่ำ',
-    task: 'งาน',
-    event: 'กิจกรรม',
-    pr: 'P/R',
-    thisMonth: 'เดือนนี้',
-    nextMonth: 'เดือนหน้า',
-    later: 'ภายหลัง',
-    view_list: '📋 รายการ',
-    view_board: '🗂 บอร์ด',
-    view_timebox: '⏱️ Timebox',
-    view_gantt: '📊 Gantt',
-    view_calendar: '📅 ปฏิทิน',
-    view_pr: '📦 PR',
-    stat_projects: 'สถิติโครงการ',
-    stat_tasks: 'สถิติงานย่อย',
-    all: 'ทั้งหมด',
-    done: 'เสร็จแล้ว',
-    in_progress: 'กำลังทำ',
-    waiting: 'รอดำเนินการ',
-    overdue: 'เกินกำหนด',
-    owner_filter: '👤 ผู้รับผิดชอบ (ทุกคน)',
-    print_btn: '📄 พิมพ์ / PDF',
-    project_type: '📁 โครงการ',
-    task_type: '✓ งานทั้งหมด',
-    perspective: 'มุมมอง',
-    code_filter: '🏷️ รหัสโครงการ (ทั้งหมด)',
-    planning_status: 'รอดำเนินการ',
-    in_progress_status: 'กำลังดำเนินการ',
-    on_hold_status: 'พักงาน',
-    completed_status: 'เสร็จสิ้น'
-  },
-  en: {
-    appTitle: 'Project Tracker',
-    appSubtitle: 'Smart Factory 4.0',
-    searchPlaceholder: 'Search projects/tasks...',
-    refreshTitle: 'Refresh data',
-    addNew: 'Add New',
-    projects: 'Projects',
-    upcoming: 'Upcoming',
-    overview: 'Overview',
-    kanban: 'Kanban',
-    gantt: 'Gantt',
-    status_planning: 'Planning',
-    status_in_progress: 'In Progress',
-    status_on_hold: 'On Hold',
-    status_completed: 'Completed',
-    noProjects: 'No projects',
-    noUpcoming: 'No upcoming items',
-    priority_high: 'High',
-    priority_medium: 'Medium',
-    priority_low: 'Low',
-    task: 'Task',
-    event: 'Event',
-    pr: 'P/R',
-    thisMonth: 'This month',
-    nextMonth: 'Next month',
-    later: 'Later',
-    view_list: '📋 List',
-    view_board: '🗂 Board',
-    view_timebox: '⏱️ Timebox',
-    view_gantt: '📊 Gantt',
-    view_calendar: '📅 Calendar',
-    view_pr: '📦 PR',
-    stat_projects: 'Project Statistics',
-    stat_tasks: 'Task Statistics',
-    all: 'All',
-    done: 'Completed',
-    in_progress: 'In Progress',
-    waiting: 'Pending',
-    overdue: 'Overdue',
-    owner_filter: '👤 Owner (All)',
-    print_btn: '📄 Print / PDF',
-    project_type: '📁 Projects',
-    task_type: '✓ All Tasks',
-    perspective: 'Perspective',
-    code_filter: '🏷️ Project Code (All)',
-    planning_status: 'Planning',
-    in_progress_status: 'In Progress',
-    on_hold_status: 'On Hold',
-    completed_status: 'Completed'
-  }
-};
-
-let currentLang = 'th';
-
-function setLanguage(lang) {
-  if (!translations[lang]) return;
-  currentLang = lang;
-  const t = translations[lang];
-  
-  // Update button label
-  const langLabel = document.querySelector('.lang-toggle .lang-label');
-  if (langLabel) langLabel.textContent = lang.toUpperCase();
-  
-  // Update static elements
-  const h1 = document.querySelector('.brand h1');
-  if (h1) h1.textContent = t.appTitle;
-  
-  const small = document.querySelector('.brand small');
-  if (small) small.textContent = t.appSubtitle;
-  
-  const searchInput = document.getElementById('search');
-  if (searchInput) searchInput.placeholder = t.searchPlaceholder;
-  
-  const refreshBtn = document.getElementById('refreshBtn');
-  if (refreshBtn) refreshBtn.title = t.refreshTitle;
-  
-  const addBtn = document.getElementById('addBtn');
-  if (addBtn) {
-    const svg = addBtn.querySelector('svg');
-    addBtn.innerHTML = '';
-    if (svg) addBtn.appendChild(svg.cloneNode(true));
-    const textNode = document.createTextNode(' ' + t.addNew);
-    addBtn.appendChild(textNode);
-  }
-  
-  // Re-render dynamic content
-  if (typeof renderOverview === 'function') renderOverview();
-  if (typeof renderGantt === 'function') renderGantt();
-  if (typeof renderListView === 'function') renderListView(state.projects, state.tasks, state.events, new Date());
-  if (typeof renderUpcoming === 'function') renderUpcoming(state.tasks, state.events, new Date());
-  
-  localStorage.setItem('preferredLang', lang);
-}
-
-// Initialize language toggle
-document.addEventListener('DOMContentLoaded', function() {
-  const savedLang = localStorage.getItem('preferredLang') || 'th';
-  setLanguage(savedLang);
-  
-  const langToggle = document.getElementById('langToggle');
-  if (langToggle) {
-    langToggle.addEventListener('click', function() {
-      const newLang = currentLang === 'th' ? 'en' : 'th';
-      setLanguage(newLang);
-    });
-  }
-});
 </script>
 
 <!-- Mobile Bottom Navigation -->
