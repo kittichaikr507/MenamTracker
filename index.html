@@ -682,7 +682,7 @@
       <div class="field" data-for="project task">
         <label>สถานะ</label>
         <select id="f-status">
-          <option value="planning">วางแผน</option>
+          <option value="planning">รอดำเนินการ</option>
           <option value="in-progress" selected>กำลังดำเนินการ</option>
           <option value="on-hold">พักงาน</option>
           <option value="completed">เสร็จสิ้น</option>
@@ -853,7 +853,7 @@ const state = {
 
 let prEditId=null, prLines=[], prPoDates={};
 
-const STATUS = { 'planning':{th:'วางแผน',cls:'planning'}, 'in-progress':{th:'กำลังดำเนินการ',cls:'in-progress'}, 'on-hold':{th:'พักงาน',cls:'on-hold'}, 'completed':{th:'เสร็จสิ้น',cls:'completed'} };
+const STATUS = { 'planning':{th:'รอดำเนินการ',cls:'planning'}, 'in-progress':{th:'กำลังดำเนินการ',cls:'in-progress'}, 'on-hold':{th:'พักงาน',cls:'on-hold'}, 'completed':{th:'เสร็จสิ้น',cls:'completed'} };
 const STATUS_ORDER = ['planning','in-progress','on-hold','completed'];
 const PR_STATUS={ 'draft':{th:'ร่าง',c:'var(--plan)'}, 'submitted':{th:'รออนุมัติ',c:'var(--prog)'}, 'approved':{th:'อนุมัติแล้ว',c:'var(--primary)'}, 'ordered':{th:'สั่งซื้อแล้ว',c:'var(--event)'}, 'received':{th:'รับของแล้ว',c:'var(--done)'}, 'rejected':{th:'ไม่อนุมัติ',c:'var(--danger)'} };
 const PR_ORDER=['draft','submitted','approved','ordered','received','rejected'];
@@ -1545,7 +1545,7 @@ function renderGantt(){
   
   // ✨ แสดง Filter Bar + Gantt Chart
   ghtml = filterHtml + ghtml + '<div class="gantt-wrap"><div class="gantt-scroll"><div class="gantt">' + qBand + header + '<div class="g-body">' + rows + '</div></div></div></div>';
-  ghtml += '<div class="cal-legend"><span><i style="background:var(--plan)"></i> วางแผน</span><span><i style="background:var(--prog)"></i> กำลังดำเนินการ</span><span><i style="background:var(--hold)"></i> พักงาน</span><span><i style="background:var(--done)"></i> เสร็จสิ้น</span><span style="color:var(--danger)">| เส้นวันนี้</span>' + (isAllYear ? '' : '<span style="color:var(--faint)">💡 นำเมาส์ชี้ที่ W เพื่อดูวันที่เริ่มต้นของสัปดาห์</span>') + '</div>';
+  ghtml += '<div class="cal-legend"><span><i style="background:var(--plan)"></i> กำลังดำเนินการ</span><span><i style="background:var(--prog)"></i> กำลังดำเนินการ</span><span><i style="background:var(--hold)"></i> พักงาน</span><span><i style="background:var(--done)"></i> เสร็จสิ้น</span><span style="color:var(--danger)">| เส้นวันนี้</span>' + (isAllYear ? '' : '<span style="color:var(--faint)">💡 นำเมาส์ชี้ที่ W เพื่อดูวันที่เริ่มต้นของสัปดาห์</span>') + '</div>';
   
   $('#ovContent').innerHTML = ghtml;
 }
