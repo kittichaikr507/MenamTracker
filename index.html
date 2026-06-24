@@ -91,6 +91,7 @@
   .b-planning { background: var(--plan-bg); color: var(--plan); }
   .b-in-progress { background: var(--prog-bg); color: var(--prog); }
   .b-on-hold { background: var(--hold-bg); color: var(--hold); }
+  .b-testing { background: #f3e8ff; color: #7e22ce; }
   .b-completed { background: var(--done-bg); color: var(--done); }
   .badge .pip { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
@@ -112,7 +113,7 @@
   .empty svg { opacity: 0.4; margin-bottom: 8px; }
 
   /* ---------- Kanban ---------- */
-  .kanban { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: start; }
+  .kanban { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; align-items: start; }
   .col { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; min-height: 140px; box-shadow: none; }
   .col-head { padding: 13px 15px; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid var(--border); font-weight: 600; font-size: 13.5px; }
   .col-head .cnt { margin-left: auto; background: var(--surface-2); border: 1px solid var(--border); border-radius: 20px; padding: 1px 9px; font-size: 12px; font-family: var(--mono); color: var(--muted); }
@@ -253,7 +254,8 @@
   .chip-f.active b { background: rgba(255,255,255,0.22); color: #fff; }
   .chip-f.f-planning.active { background: var(--plan); border-color: var(--plan); }
   .chip-f.f-in-progress.active { background: var(--prog); border-color: var(--prog); }
-  .chip-f.f-on-hold.active { background: var(--hold); border-color: var(--hold); }
+ .chip-f.f-on-hold.active { background: var(--hold); border-color: var(--hold); }
+  .chip-f.f-testing.active { background: #7e22ce; border-color: #7e22ce; }
   .chip-f.f-completed.active { background: var(--done); border-color: var(--done); }
   
   select.chip-f {
@@ -690,9 +692,10 @@
       <div class="field" data-for="project task">
         <label>สถานะ</label>
         <select id="f-status">
-          <option value="planning">วางแผน</option>
+          <option value="on-hold">งานค้าง</option>
+          <option value="planning">รอดำเนินการ</option>
           <option value="in-progress" selected>กำลังดำเนินการ</option>
-          <option value="on-hold">พักงาน</option>
+          <option value="testing">ทดสอบ</option>
           <option value="completed">เสร็จสิ้น</option>
         </select>
       </div>
@@ -861,11 +864,11 @@ const state = {
 
 let prEditId=null, prLines=[], prPoDates={};
 
-const STATUS = { 'planning':{th:'วางแผน',cls:'planning'}, 'in-progress':{th:'กำลังดำเนินการ',cls:'in-progress'}, 'on-hold':{th:'พักงาน',cls:'on-hold'}, 'completed':{th:'เสร็จสิ้น',cls:'completed'} };
-const STATUS_ORDER = ['planning','in-progress','on-hold','completed'];
+const STATUS = { 'on-hold':{th:'งานค้าง',cls:'on-hold'}, 'planning':{th:'รอดำเนินการ',cls:'planning'}, 'in-progress':{th:'กำลังดำเนินการ',cls:'in-progress'}, 'testing':{th:'ทดสอบ',cls:'testing'}, 'completed':{th:'เสร็จสิ้น',cls:'completed'} };
+const STATUS_ORDER = ['on-hold','planning','in-progress','testing','completed'];
 const PR_STATUS={ 'draft':{th:'ร่าง',c:'var(--plan)'}, 'submitted':{th:'รออนุมัติ',c:'var(--prog)'}, 'approved':{th:'อนุมัติแล้ว',c:'var(--primary)'}, 'ordered':{th:'สั่งซื้อแล้ว',c:'var(--event)'}, 'received':{th:'รับของแล้ว',c:'var(--done)'}, 'rejected':{th:'ไม่อนุมัติ',c:'var(--danger)'} };
 const PR_ORDER=['draft','submitted','approved','ordered','received','rejected'];
-const COL_SWATCH = {'planning':'var(--plan)','in-progress':'var(--prog)','on-hold':'var(--hold)','completed':'var(--done)'};
+const COL_SWATCH = {'on-hold':'var(--hold)','planning':'var(--plan)','in-progress':'var(--prog)','testing':'#7e22ce','completed':'var(--done)'};
 const TH_MONTH = ['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
 const TH_MONTH_S = ['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
 const TH_DOW = ['อา.','จ.','อ.','พ.','พฤ.','ศ.','ส.'];
