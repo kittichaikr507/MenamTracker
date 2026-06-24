@@ -414,14 +414,104 @@
     .timebox-layout { grid-template-columns: 1fr; }
     .tb-sidebar { max-height: 300px; }
     .tb-scroll { height: 500px; }
+    .topbar { padding: 0 12px; height: 56px; }
+    .logo { width: 34px; height: 34px; font-size: 16px; }
+    .brand h1 { font-size: 16px; }
+    .icon-btn { width: 36px; height: 36px; }
+    .btn { padding: 8px 14px; font-size: 13px; }
+    main { padding: 16px; }
   }
   @media(max-width:640px) {
-    main { padding: 14px; }
+    main { padding: 12px; padding-bottom: 80px; }
     .kanban { grid-template-columns: 1fr; }
     .cal-cell { min-height: 84px; }
     .brand small { display: none; }
     .tab span { display: none; }
     .sg-grid, .sg-grid-5 { grid-template-columns: repeat(3, 1fr); }
+    .topbar { padding: 0 10px; height: 52px; }
+    .logo { width: 32px; height: 32px; font-size: 15px; }
+    .brand h1 { font-size: 15px; }
+    .panel-head { padding: 12px 14px; }
+    .panel-body { padding: 12px 14px; }
+    .seg-lg button { padding: 7px 14px; font-size: 12.5px; }
+    .ov-toolbar { padding: 8px 12px; gap: 8px; }
+    .ov-vlabel { display: none; }
+    .g-label-sp, .g-label { flex: 0 0 200px; width: 200px; }
+    .g-nm { font-size: 12.5px; }
+    .card { padding: 10px; }
+    .card .cname { font-size: 13px; }
+    .proj-head { padding: 12px 13px; }
+    .task-row { padding: 7px 13px 7px 22px; }
+    .add-task { padding: 7px 13px 7px 22px; }
+    .li { padding: 11px 8px; }
+    .cal-top { gap: 8px; }
+    .cal-top h2 { font-size: 16px; min-width: 140px; }
+    .gantt-top { gap: 8px; }
+    .gantt-top h2 { font-size: 16px; min-width: 60px; }
+    .tb-header { padding: 12px 14px; }
+    .tb-card { left: 45px; right: 10px; font-size: 11.5px; }
+    .tb-hour-lbl { width: 45px; font-size: 10.5px; }
+  }
+  
+  /* ========== Mobile Bottom Navigation ========== */
+  .mobile-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
+    z-index: 100;
+    padding: env(safe-area-inset-bottom, 0);
+  }
+  
+  .mobile-nav-inner {
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 4px;
+    gap: 4px;
+    cursor: pointer;
+    transition: 0.15s;
+    color: var(--muted);
+    text-decoration: none;
+    min-width: 60px;
+  }
+  
+  .mobile-nav-item:active {
+    transform: scale(0.95);
+  }
+  
+  .mobile-nav-item.active {
+    color: var(--primary);
+  }
+  
+  .mobile-nav-icon {
+    font-size: 20px;
+    line-height: 1;
+  }
+  
+  .mobile-nav-label {
+    font-size: 10px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  
+  @media(max-width:640px) {
+    .mobile-nav {
+      display: block;
+    }
   }
 
   /* ===== Printable / PDF Exports ===== */
@@ -908,6 +998,9 @@ function renderOverview() {
   html += '<div id="ovContent"></div>';
 
   $('#view-overview').innerHTML = html;
+
+  // Update mobile nav after rendering
+  setTimeout(() => updateMobileNav(mode), 50);
 
   if (mode === 'list') renderListView(projects, tasks, events, today);
   else if (mode === 'board') {
@@ -1504,6 +1597,48 @@ $('#pr-tbody').addEventListener('change',e=>{ if(e.target.dataset.f==='po') rend
 $('#pr-pobody').addEventListener('change',e=>{ const t=e.target; if(t.dataset&&t.dataset.po!==undefined){ const po=t.dataset.po; if(!prPoDates[po]) prPoDates[po]={delivery:'',received:''}; prPoDates[po][t.dataset.k]=t.value; } });
 
 (function init(){ const d=new Date(); state.calM=d.getMonth(); state.calY=d.getFullYear(); state.ganttYear=d.getFullYear(); load(); })();
+
+// Mobile Navigation Functions
+function updateMobileNav(activeMode) {
+  const items = document.querySelectorAll('.mobile-nav-item');
+  items.forEach(item => {
+    item.classList.remove('active');
+    if (item.dataset.view === activeMode) {
+      item.classList.add('active');
+    }
+  });
+}
+
+function navTo(view) {
+  setOv('mode', view);
+  updateMobileNav(view);
+}
 </script>
+
+<!-- Mobile Bottom Navigation -->
+<div class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <div class="mobile-nav-item" data-view="list" onclick="navTo('list')">
+      <span class="mobile-nav-icon">📋</span>
+      <span class="mobile-nav-label">รายการ</span>
+    </div>
+    <div class="mobile-nav-item" data-view="board" onclick="navTo('board')">
+      <span class="mobile-nav-icon">🗂</span>
+      <span class="mobile-nav-label">บอร์ด</span>
+    </div>
+    <div class="mobile-nav-item" data-view="timebox" onclick="navTo('timebox')">
+      <span class="mobile-nav-icon">⏱️</span>
+      <span class="mobile-nav-label">Timebox</span>
+    </div>
+    <div class="mobile-nav-item" data-view="gantt" onclick="navTo('gantt')">
+      <span class="mobile-nav-icon">📊</span>
+      <span class="mobile-nav-label">Gantt</span>
+    </div>
+    <div class="mobile-nav-item" data-view="calendar" onclick="navTo('calendar')">
+      <span class="mobile-nav-icon">📅</span>
+      <span class="mobile-nav-label">ปฏิทิน</span>
+    </div>
+  </div>
+</div>
 </body>
 </html>
