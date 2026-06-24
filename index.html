@@ -1301,25 +1301,149 @@ function quarterWindow(year,mode){ const pad=n=>String(n).padStart(2,'0'); const
 function dDays(iso){ const p=iso.split('-'); return Date.UTC(+p[0],+p[1]-1,+p[2])/86400000; } function overlaps(s,e,ws,we){ if(!s&&!e) return true; const a=s||e, b=e||s; return a<=we && b>=ws; }
 
 function renderGantt(){
-  const y=state.ganttYear, mode=state.ganttMode; const win=quarterWindow(y,mode); const ws=dDays(win.start), we=dDays(win.end), total=we-ws+1; const todayD=dDays(todayISO()), todayPct=(todayD>=ws&&todayD<=we)?((todayD-ws+0.5)/total*100):null; const isAllYear = (mode === 'all');
-  const months=[]; const monthBoundaries = []; for(let m=win.m0;m<=win.m1;m++){ const mStart=Date.UTC(y,m,1)/86400000, mEnd=Date.UTC(y,m+1,0)/86400000; const viewStart = Math.max(mStart, ws), viewEnd = Math.min(mEnd, we); if(viewEnd >= viewStart) { months.push({m, widthPct:(viewEnd-viewStart+1)/total*100}); if(viewEnd < we) monthBoundaries.push((viewEnd - ws + 1) / total * 100); } }
-  const weeksHtml = []; const weekBoundaries = []; let curD = ws; while(curD <= we) { const dateObj = new Date(curD * 86400000); let dow = dateObj.getUTCDay(); let daysToEnd = dow === 0 ? 0 : 7 - dow; let endD = curD + daysToEnd; if (endD > we) endD = we; const wWidth = (endD - curD + 1) / total * 100; const d = new Date(curD * 86400000); d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1)), weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7); const isoDate = new Date(curD * 86400000).toISOString().split('T')[0]; weeksHtml.push('<div class="g-wk" style="width:' + wWidth + '%" title="เริ่ม ' + thDate(isoDate) + '">W' + weekNo + '</div>'); if(endD < we) weekBoundaries.push((endD - ws + 1) / total * 100); curD = endD + 1; }
-  const weeksRow = isAllYear ? '' : '<div class="g-weeks">' + weeksHtml.join('') + '</div>'; const boundaries = isAllYear ? monthBoundaries : weekBoundaries; let stops=['transparent 0']; boundaries.forEach(p=>{ stops.push('transparent calc(' + p + '% - 0.5px)','var(--border) calc(' + p + '% - 0.5px)','var(--border) calc(' + p + '% + 0.5px)','transparent calc(' + p + '% + 0.5px)'); }); stops.push('transparent 100%'); const gridBg='linear-gradient(90deg, ' + stops.join(', ') + ')'; const todayBg=todayPct!=null?'linear-gradient(90deg, transparent calc(' + todayPct + '% - 1px), var(--danger) calc(' + todayPct + '% - 1px), var(--danger) calc(' + todayPct + '% + 1px), transparent calc(' + todayPct + '% + 1px)), ':''; const trackBg=todayBg+gridBg;
-  const matchOwn = i => state.ovOwner === 'all' || (i.owner||'').trim() === state.ovOwner; const projects=filtered().filter(i=>i.type==='project'&&overlaps(i.startDate,i.endDate,win.start,win.end)&&matchOwn(i)); const allTasks=state.items.filter(i=>i.type==='task'&&matchOwn(i)), orphanTasks=filtered().filter(i=>i.type==='task'&&!i.projectId&&overlaps(i.startDate,i.endDate,win.start,win.end)&&matchOwn(i));
+  const y=state.ganttYear, mode=state.ganttMode; 
+  const win=quarterWindow(y,mode); 
+  const ws=dDays(win.start), we=dDays(win.end), total=we-ws+1; 
+  const todayD=dDays(todayISO());
+  const todayPct=(todayD>=ws&&todayD<=we)?((todayD-ws+0.5)/total*100):null; 
+  const isAllYear = (mode === 'all');
   
-  let qBand=''; if(isAllYear){ const qd=[[0,2],[3,5],[6,8],[9,11]].map(([a,b])=>{ let d=0; for(let m=a;m<=b;m++){ d+=(Date.UTC(y,m+1,0)/86400000)-(Date.UTC(y,m,1)/86400000)+1; } return d; }); qBand='<div class="g-qband"><div class="g-label-sp"></div><div class="g-qrow">'; ['Q1','Q2','Q3','Q4'].forEach((q,i)=> qBand += '<div class="g-q" style="width:' + (qd[i]/total*100) + '%">' + q + '</div>'); qBand += '</div></div>'; }
-  let monHtml = ''; months.forEach(mm => monHtml += '<div class="g-mon" style="width:' + mm.widthPct + '%">' + TH_MONTH_S[mm.m] + '</div>');
+  // ✨ เพิ่มการกรองตามสถานะที่เลือก
+  const matchStatus = i => state.ovStatus === 'all' || (i.status || 'planning') === state.ovStatus;
+  const matchOwn = i => state.ovOwner === 'all' || (i.owner||'').trim() === state.ovOwner;
+  
+  // ✨ กรองข้อมูลตามสถานะ + owner + search
+  const projects=filtered().filter(i=>i.type==='project'&&overlaps(i.startDate,i.endDate,win.start,win.end)&&matchOwn(i)&&matchStatus(i)); 
+  const allTasks=state.items.filter(i=>i.type==='task'&&matchOwn(i)&&matchStatus(i)); 
+  const orphanTasks=filtered().filter(i=>i.type==='task'&&!i.projectId&&overlaps(i.startDate,i.endDate,win.start,win.end)&&matchOwn(i)&&matchStatus(i));
+  
+  // คำนวณเดือนและสัปดาห์
+  const months=[]; 
+  const monthBoundaries = []; 
+  for(let m=win.m0;m<=win.m1;m++){ 
+    const mStart=Date.UTC(y,m,1)/86400000;
+    const mEnd=Date.UTC(y,m+1,0)/86400000; 
+    const viewStart = Math.max(mStart, ws);
+    const viewEnd = Math.min(mEnd, we); 
+    if(viewEnd >= viewStart) { 
+      months.push({m, widthPct:(viewEnd-viewStart+1)/total*100}); 
+      if(viewEnd < we) monthBoundaries.push((viewEnd - ws + 1) / total * 100); 
+    } 
+  }
+  
+  const weeksHtml = []; 
+  const weekBoundaries = []; 
+  let curD = ws; 
+  while(curD <= we) { 
+    const dateObj = new Date(curD * 86400000); 
+    let dow = dateObj.getUTCDay(); 
+    let daysToEnd = dow === 0 ? 0 : 7 - dow; 
+    let endD = curD + daysToEnd; 
+    if (endD > we) endD = we; 
+    const wWidth = (endD - curD + 1) / total * 100; 
+    const d = new Date(curD * 86400000); 
+    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7)); 
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1)/7); 
+    const isoDate = new Date(curD * 86400000).toISOString().split('T')[0]; 
+    weeksHtml.push('<div class="g-wk" style="width:' + wWidth + '%" title="เริ่ม ' + thDate(isoDate) + '">W' + weekNo + '</div>'); 
+    if(endD < we) weekBoundaries.push((endD - ws + 1) / total * 100); 
+    curD = endD + 1; 
+  }
+  
+  const weeksRow = isAllYear ? '' : '<div class="g-weeks">' + weeksHtml.join('') + '</div>'; 
+  const boundaries = isAllYear ? monthBoundaries : weekBoundaries; 
+  let stops=['transparent 0']; 
+  boundaries.forEach(p=>{ 
+    stops.push('transparent calc(' + p + '% - 0.5px)','var(--border) calc(' + p + '% - 0.5px)','var(--border) calc(' + p + '% + 0.5px)','transparent calc(' + p + '% + 0.5px)'); 
+  }); 
+  stops.push('transparent 100%'); 
+  const gridBg='linear-gradient(90deg, ' + stops.join(', ') + ')'; 
+  const todayBg=todayPct!=null?'linear-gradient(90deg, transparent calc(' + todayPct + '% - 1px), var(--danger) calc(' + todayPct + '% - 1px), var(--danger) calc(' + todayPct + '% + 1px), transparent calc(' + todayPct + '% + 1px)), ':''; 
+  const trackBg=todayBg+gridBg;
+  
+  // สร้าง Quarter Band
+  let qBand=''; 
+  if(isAllYear){ 
+    const qd=[[0,2],[3,5],[6,8],[9,11]].map(([a,b])=>{ 
+      let d=0; 
+      for(let m=a;m<=b;m++){ 
+        d+=(Date.UTC(y,m+1,0)/86400000)-(Date.UTC(y,m,1)/86400000)+1; 
+      } 
+      return d; 
+    }); 
+    qBand='<div class="g-qband"><div class="g-label-sp"></div><div class="g-qrow">'; 
+    ['Q1','Q2','Q3','Q4'].forEach((q,i)=> qBand += '<div class="g-q" style="width:' + (qd[i]/total*100) + '%">' + q + '</div>'); 
+    qBand += '</div></div>'; 
+  }
+  
+  let monHtml = ''; 
+  months.forEach(mm => monHtml += '<div class="g-mon" style="width:' + mm.widthPct + '%">' + TH_MONTH_S[mm.m] + '</div>');
   const header='<div class="g-header"><div class="g-label-sp">โครงการ / งาน</div><div class="g-header-right"><div class="g-months">' + monHtml + '</div>' + weeksRow + '</div></div>';
   
-  function bar(it){ const s=it.startDate||it.endDate, e=it.endDate||it.startDate; if(!s) return '<div class="g-track" style="background-image:' + trackBg + '"><span class="g-nodate">— ไม่ได้ระบุวันที่ —</span></div>'; let bs=dDays(s), be=dDays(e); if(be<bs) be=bs; const cs=Math.max(bs,ws), ce=Math.min(be,we); if(ce<cs) return '<div class="g-track" style="background-image:' + trackBg + '"></div>'; const left=(cs-ws)/total*100, width=(ce-cs+1)/total*100, pct=getPct(it), col=COL_SWATCH[it.status||'planning']||'var(--primary)'; return '<div class="g-track" style="background-image:' + trackBg + '"><div class="g-bar" style="left:' + left + '%;width:' + width + '%;--bc:' + col + '" title="' + esc(it.name) + ' · ' + thDate(s) + ' → ' + thDate(e) + ' · ' + pct + '%"><div class="g-fill" style="width:' + pct + '%"></div></div></div>'; }
-  let rows=''; projects.forEach(p=>{ const collapsed=state.ganttCollapsed[p.id], tks=allTasks.filter(t=>t.projectId===p.id&&overlaps(t.startDate,t.endDate,win.start,win.end)), pct=getPct(p); rows+='<div class="g-row proj"><div class="g-label" onclick="toggleGantt(\'' + p.id + '\')"><svg class="g-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.5" style="transform:rotate(' + (collapsed?0:90) + 'deg)"><path d="m9 18 6-6-6-6"/></svg><span class="g-pip" style="background:' + (COL_SWATCH[p.status]||'var(--faint)') + '"></span><span class="g-nm" onclick="event.stopPropagation();openModal(\'project\',getItem(\'' + p.id + '\'))">' + esc(p.name) + '</span><span class="g-pct">' + pct + '%</span></div>' + bar(p) + '</div>'; if(!collapsed){ if(!tks.length) rows+='<div class="g-row task"><div class="g-label sub"><span class="g-subnote">ไม่มีงานย่อยในช่วงนี้</span></div><div class="g-track" style="background-image:' + trackBg + '"></div></div>'; tks.forEach(t=>{ const tp=getPct(t); rows+='<div class="g-row task"><div class="g-label sub" onclick="openModal(\'task\',getItem(\'' + t.id + '\'))"><span class="pri ' + esc(t.priority||'medium') + '"></span><span class="g-nm">' + esc(t.name) + '</span><span class="g-pct sub">' + tp + '%</span></div>' + bar(t) + '</div>'; }); } });
-  if(orphanTasks.length){ const collapsed=state.ganttCollapsed['__orphan']; rows+='<div class="g-row proj"><div class="g-label" onclick="toggleGantt(\'__orphan\')"><svg class="g-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.5" style="transform:rotate(' + (collapsed?0:90) + 'deg)"><path d="m9 18 6-6-6-6"/></svg><span class="g-pip" style="background:var(--faint)"></span><span class="g-nm">งานอิสระ (ไม่อยู่ในโครงการ)</span><span class="g-pct">' + orphanTasks.length + '</span></div><div class="g-track" style="background-image:' + trackBg + '"></div></div>'; if(!collapsed) orphanTasks.forEach(t=>{ const tp=getPct(t); rows+='<div class="g-row task"><div class="g-label sub" onclick="openModal(\'task\',getItem(\'' + t.id + '\'))"><span class="pri ' + esc(t.priority||'medium') + '"></span><span class="g-nm">' + esc(t.name) + '</span><span class="g-pct sub">' + tp + '%</span></div>' + bar(t) + '</div>'; }); }
+  // ฟังก์ชันสร้าง Bar
+  function bar(it){ 
+    const s=it.startDate||it.endDate;
+    const e=it.endDate||it.startDate; 
+    if(!s) return '<div class="g-track" style="background-image:' + trackBg + '"><span class="g-nodate">— ไม่ได้ระบุวันที่ —</span></div>'; 
+    let bs=dDays(s);
+    let be=dDays(e); 
+    if(be<bs) be=bs; 
+    const cs=Math.max(bs,ws);
+    const ce=Math.min(be,we); 
+    if(ce<cs) return '<div class="g-track" style="background-image:' + trackBg + '"></div>'; 
+    const left=(cs-ws)/total*100;
+    const width=(ce-cs+1)/total*100;
+    const pct=getPct(it);
+    const col=COL_SWATCH[it.status||'planning']||'var(--primary)'; 
+    return '<div class="g-track" style="background-image:' + trackBg + '"><div class="g-bar" style="left:' + left + '%;width:' + width + '%;--bc:' + col + '" title="' + esc(it.name) + ' · ' + thDate(s) + ' → ' + thDate(e) + ' · ' + pct + '%"><div class="g-fill" style="width:' + pct + '%"></div></div></div>'; 
+  }
+  
+  // สร้าง Rows
+  let rows=''; 
+  projects.forEach(p=>{ 
+    const collapsed=state.ganttCollapsed[p.id];
+    const tks=allTasks.filter(t=>t.projectId===p.id&&overlaps(t.startDate,t.endDate,win.start,win.end));
+    const pct=getPct(p); 
+    rows+='<div class="g-row proj"><div class="g-label" onclick="toggleGantt(\'' + p.id + '\')"><svg class="g-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.5" style="transform:rotate(' + (collapsed?0:90) + 'deg)"><path d="m9 18 6-6-6-6"/></svg><span class="g-pip" style="background:' + (COL_SWATCH[p.status]||'var(--faint)') + '"></span><span class="g-nm" onclick="event.stopPropagation();openModal(\'project\',getItem(\'' + p.id + '\'))">' + esc(p.name) + '</span><span class="g-pct">' + pct + '%</span></div>' + bar(p) + '</div>'; 
+    if(!collapsed){ 
+      if(!tks.length) rows+='<div class="g-row task"><div class="g-label sub"><span class="g-subnote">ไม่มีงานย่อยในช่วงนี้</span></div><div class="g-track" style="background-image:' + trackBg + '"></div></div>'; 
+      tks.forEach(t=>{ 
+        const tp=getPct(t); 
+        rows+='<div class="g-row task"><div class="g-label sub" onclick="openModal(\'task\',getItem(\'' + t.id + '\'))"><span class="pri ' + esc(t.priority||'medium') + '"></span><span class="g-nm">' + esc(t.name) + '</span><span class="g-pct sub">' + tp + '%</span></div>' + bar(t) + '</div>'; 
+      }); 
+    } 
+  });
+  
+  if(orphanTasks.length){ 
+    const collapsed=state.ganttCollapsed['__orphan']; 
+    rows+='<div class="g-row proj"><div class="g-label" onclick="toggleGantt(\'__orphan\')"><svg class="g-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.5" style="transform:rotate(' + (collapsed?0:90) + 'deg)"><path d="m9 18 6-6-6-6"/></svg><span class="g-pip" style="background:var(--faint)"></span><span class="g-nm">งานอิสระ (ไม่อยู่ในโครงการ)</span><span class="g-pct">' + orphanTasks.length + '</span></div><div class="g-track" style="background-image:' + trackBg + '"></div></div>'; 
+    if(!collapsed) orphanTasks.forEach(t=>{ 
+      const tp=getPct(t); 
+      rows+='<div class="g-row task"><div class="g-label sub" onclick="openModal(\'task\',getItem(\'' + t.id + '\'))"><span class="pri ' + esc(t.priority||'medium') + '"></span><span class="g-nm">' + esc(t.name) + '</span><span class="g-pct sub">' + tp + '%</span></div>' + bar(t) + '</div>'; 
+    }); 
+  }
+  
   if(!projects.length && !orphanTasks.length) rows=emptyBox('ไม่มีโครงการในช่วงเวลานี้');
   
+  // ✨ สร้าง Filter Bar สำหรับ Gantt
+  let filterHtml = '<div style="margin-bottom: 14px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; padding: 10px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);">';
+  filterHtml += '<span class="ov-vlabel" style="margin-right: 4px;">🔖 กรองสถานะ:</span>';
+  
+  [['all','📋 ทั้งหมด']].concat(STATUS_ORDER.map(s=>[s, STATUS[s].th])).forEach(([k,label]) => {
+      const cls = k==='all' ? '' : ('f-' + STATUS[k].cls);
+      const active = state.ovStatus === k ? 'active' : '';
+      filterHtml += '<button class="chip-f ' + cls + ' ' + active + '" onclick="setOv(\'status\',\'' + k + '\')">' + label + '</button>';
+  });
+  filterHtml += '</div>';
+  
+  // สร้าง Gantt Top Bar
   let ghtml = '<div class="gantt-top"><div class="cal-nav"><button class="icon-btn" onclick="ganttNav(-1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m15 18-6-6 6-6"/></svg></button><button class="icon-btn" onclick="ganttNav(1)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6 6-6"/></svg></button></div><h2 style="font-size:18px;font-weight:600;min-width:74px">ปี ' + (y+543) + '</h2><div class="qseg">';
   ['all','Q1','Q2','Q3','Q4'].forEach(q => ghtml += '<button class="' + (mode===q?'active':'') + '" onclick="ganttMode(\'' + q + '\')">' + (q==='all'?'ทั้งปี':q) + '</button>');
   ghtml += '</div><div style="flex:1"></div><button class="btn btn-ghost" onclick="expandAllGantt(false)">กางทั้งหมด</button><button class="btn btn-ghost" onclick="expandAllGantt(true)">ยุบทั้งหมด</button></div>';
-  ghtml += '<div class="gantt-wrap"><div class="gantt-scroll"><div class="gantt">' + qBand + header + '<div class="g-body">' + rows + '</div></div></div></div>';
+  
+  // ✨ แสดง Filter Bar + Gantt Chart
+  ghtml = filterHtml + ghtml + '<div class="gantt-wrap"><div class="gantt-scroll"><div class="gantt">' + qBand + header + '<div class="g-body">' + rows + '</div></div></div></div>';
   ghtml += '<div class="cal-legend"><span><i style="background:var(--plan)"></i> วางแผน</span><span><i style="background:var(--prog)"></i> กำลังดำเนินการ</span><span><i style="background:var(--hold)"></i> พักงาน</span><span><i style="background:var(--done)"></i> เสร็จสิ้น</span><span style="color:var(--danger)">| เส้นวันนี้</span>' + (isAllYear ? '' : '<span style="color:var(--faint)">💡 นำเมาส์ชี้ที่ W เพื่อดูวันที่เริ่มต้นของสัปดาห์</span>') + '</div>';
   
   $('#ovContent').innerHTML = ghtml;
