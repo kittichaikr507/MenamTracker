@@ -374,6 +374,9 @@
   .sg-tile.t-wait { background: var(--plan-bg); }
   .sg-tile.t-wait::before { background: var(--plan); }
   .sg-tile.t-wait .sg-num, .sg-tile.t-wait .sg-lbl { color: var(--plan); }
+  .sg-tile.t-test { background: #f3e8ff; }
+  .sg-tile.t-test::before { background: #7e22ce; }
+  .sg-tile.t-test .sg-num, .sg-tile.t-test .sg-lbl { color: #7e22ce; }
   .sg-tile.t-over { background: #fdecea; }
   .sg-tile.t-over::before { background: var(--danger); }
   .sg-tile.t-over .sg-num, .sg-tile.t-over .sg-lbl { color: var(--danger); }
@@ -939,9 +942,10 @@ function renderOverview() {
   const statProjects = projects.filter(matchOwn);
   const statTasks = tasks.filter(matchOwn);
 
-  const grp = arr => ({
+ const grp = arr => ({
     all: arr.length,
     done: arr.filter(i => i.status === 'completed').length,
+    test: arr.filter(i => i.status === 'testing').length,
     prog: arr.filter(i => i.status === 'in-progress').length,
     wait: arr.filter(i => !i.status || i.status === 'planning' || i.status === 'on-hold').length
   });
@@ -978,9 +982,10 @@ function renderOverview() {
   html += '<div class="statgroups">';
   html += '  <div class="sg-card">';
   html += '    <div class="sg-head"><span class="sg-ic ic-proj">📁</span><h3>สถิติโครงการ' + ownLabel + '</h3></div>';
-  html += '    <div class="sg-grid">';
+ html += '    <div class="sg-grid sg-grid-5">';
   html += '      <div class="sg-tile t-all" onclick="openDetails(\'project\', \'all\')"><div class="sg-num">' + pStat.all + '</div><div class="sg-lbl">ทั้งหมด</div></div>';
   html += '      <div class="sg-tile t-done" onclick="openDetails(\'project\', \'done\')"><div class="sg-num">' + pStat.done + '</div><div class="sg-lbl">เสร็จแล้ว</div></div>';
+  html += '      <div class="sg-tile t-test" onclick="openDetails(\'project\', \'test\')"><div class="sg-num">' + pStat.test + '</div><div class="sg-lbl">ทดสอบ</div></div>';
   html += '      <div class="sg-tile t-prog" onclick="openDetails(\'project\', \'prog\')"><div class="sg-num">' + pStat.prog + '</div><div class="sg-lbl">กำลังทำ</div></div>';
   html += '      <div class="sg-tile t-wait" onclick="openDetails(\'project\', \'wait\')"><div class="sg-num">' + pStat.wait + '</div><div class="sg-lbl">รอดำเนินการ</div></div>';
   html += '    </div>';
@@ -1041,6 +1046,7 @@ function openDetails(type, filterMode) {
   
   if (filterMode === 'all') { titleSuffix = 'ทั้งหมด'; } 
   else if (filterMode === 'done') { titleSuffix = 'เสร็จสมบูรณ์'; list = list.filter(i => i.status === 'completed'); } 
+  else if (filterMode === 'test') { titleSuffix = 'ทดสอบ'; list = list.filter(i => i.status === 'testing'); }
   else if (filterMode === 'prog') { titleSuffix = 'กำลังดำเนินการ'; list = list.filter(i => i.status === 'in-progress'); } 
   else if (filterMode === 'wait') { titleSuffix = 'รอดำเนินการ'; list = list.filter(i => !i.status || i.status === 'planning' || i.status === 'on-hold'); } 
   else if (filterMode === 'overdue') { titleSuffix = 'เกินกำหนด'; list = list.filter(i => i.endDate && i.endDate < today && i.status !== 'completed'); }
