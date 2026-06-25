@@ -130,7 +130,7 @@
   .card .cname { font-weight: 600; font-size: 13.8px; line-height: 1.35; flex: 1; white-space: normal; }
   .card .cmeta { font-size: 11.5px; color: var(--muted); margin-top: 7px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .card .cmeta .who { display: inline-flex; align-items: center; gap: 4px; }
-  .avatar { width: 18px; height: 18px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 10px; display: grid; place-items: center; font-weight: 600; flex: 0 0 auto; }
+  .avatar { width: 18px; height: 18px; border-radius: 50%; color: #fff; font-size: 10px; display: grid; place-items: center; font-weight: 600; flex: 0 0 auto; }
   .card .cbar { display: flex; align-items: center; gap: 8px; margin-top: 9px; }
   .card .cbar .bar { flex: 1; }
   .card .cbar .pct { font-family: var(--mono); font-size: 11px; color: var(--muted); }
@@ -219,6 +219,7 @@
   .chip.c-pr { background: var(--prog-bg); color: var(--prog); border-color: var(--prog); }
   .chip.c-prdone { background: var(--done-bg); color: var(--done); border-color: var(--done); }
   .chip .tm { font-family: var(--mono); font-weight: 600; margin-right: 3px; }
+  .chip-avatar { width: 15px; height: 15px; border-radius: 50%; color: #fff; font-size: 8px; display: inline-grid; place-items: center; font-weight: 600; vertical-align: middle; margin-left: 4px; flex: 0 0 auto; }
   .cal-legend { display: flex; gap: 18px; margin-top: 13px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
   .cal-legend span { display: inline-flex; align-items: center; gap: 6px; }
   .cal-legend i { width: 11px; height: 11px; border-radius: 3px; display: inline-block; }
@@ -881,6 +882,13 @@ const esc = s => (s == null ? '' : String(s)).replace(/[&<>"]/g, c => ({'&':'&am
 function todayISO() { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
 function thDate(iso) { if (!iso) return '—'; const p = iso.split('-'); if (p.length < 3) return iso; return parseInt(p[2]) + ' ' + TH_MONTH_S[parseInt(p[1])-1] + ' ' + (parseInt(p[0]) + 543); }
 function initials(n) { if (!n) return '?'; return n.trim().charAt(0).toUpperCase(); }
+function getAvatarColor(name) {
+  if (!name) return 'var(--primary)';
+  const colors = ['#e74c3c', '#e67e22', '#f39c12', '#27ae60', '#2ecc71', '#1abc9c', '#16a085', '#3498db', '#2980b9', '#8e44ad', '#9b59b6', '#34495e'];
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) { hash = ((hash << 5) - hash) + name.charCodeAt(i); hash |= 0; }
+  return colors[Math.abs(hash) % colors.length];
+}
 function toast(msg, type) { const t = $('#toast'); t.textContent = msg; t.className = 'toast show ' + (type||''); clearTimeout(t._t); t._t = setTimeout(() => t.className = 'toast ' + (type||''), 2600); }
 function showLoader(b) { $('#loader').classList.toggle('hidden', !b); }
 function getItem(id) { return state.items.find(i => String(i.id) === String(id)); }
@@ -1325,7 +1333,7 @@ function renderOvList(projects,tasks){
 function projectCard(p,tasks){ 
   const own=state.ovOwner; let ptasks=tasks.filter(t=>t.projectId===p.id); if(own !== 'all') { ptasks = ptasks.filter(t => (t.owner||'').trim() === own); } 
   const open=state.expanded[p.id], st=STATUS[p.status]||STATUS['planning'], pct=getPct(p), col=COL_SWATCH[p.status]||'var(--primary)'; 
-  let h='<div class="proj"><div class="proj-head" onclick="toggleProj(\'' + p.id + '\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.5" style="transition:.2s;transform:rotate(' + (open?90:0) + 'deg)"><path d="m9 18 6-6-6-6"/></svg><span class="g-pip" style="background:' + col + '"></span><div class="proj-title"><div class="nm">' + esc(p.name) + '</div><div class="meta"><span class="badge b-' + st.cls + '"><span class="pip"></span>' + st.th + '</span>' + (p.owner?'<span>👤 ' + esc(p.owner) + '</span>':'') + '<span>📋 ' + ptasks.length + ' งาน</span></div></div><div class="bar"><i style="width:' + pct + '%;background:' + col + '"></i></div><div class="proj-pct">' + pct + '%</div><button class="icon-btn sm" onclick="event.stopPropagation();openModal(\'project\',getItem(\'' + p.id + '\'))"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>'; 
+  let h='<div class="proj"><div class="proj-head" onclick="toggleProj(\'' + p.id + '\')"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.5" style="transition:.2s;transform:rotate(' + (open?90:0) + 'deg)"><path d="m9 18 6-6-6-6"/></svg><span class="g-pip" style="background:' + col + '"></span><div class="proj-title"><div class="nm">' + esc(p.name) + '</div><div class="meta"><span class="badge b-' + st.cls + '"><span class="pip"></span>' + st.th + '</span>' + (p.owner?'<span>👤 <span class="avatar" style="background:' + getAvatarColor(p.owner) + '; width:16px; height:16px; font-size:9px; display:inline-grid; vertical-align:middle; margin-right:3px;">' + initials(p.owner) + '</span>' + esc(p.owner) + '</span>':'') + '<span>📋 ' + ptasks.length + ' งาน</span></div></div><div class="bar"><i style="width:' + pct + '%;background:' + col + '"></i></div><div class="proj-pct">' + pct + '%</div><button class="icon-btn sm" onclick="event.stopPropagation();openModal(\'project\',getItem(\'' + p.id + '\'))"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></button></div>'; 
   if(open){ 
     h+='<div class="proj-tasks">'; 
     ptasks.forEach(t=>{ 
@@ -1339,7 +1347,7 @@ function projectCard(p,tasks){
 
 function taskListItem(t,pn){ 
   const st=STATUS[t.status]||STATUS['planning'], pct=getPct(t), col=COL_SWATCH[t.status]||'var(--faint)', parent=t.projectId?pn[t.projectId]:null; 
-  return '<div class="li" onclick="openModal(\'task\',getItem(\'' + t.id + '\'))"><span class="li-pip" style="background:' + col + '"></span><div class="li-main"><div class="li-title"><span class="pri ' + esc(t.priority||'medium') + '"></span><span class="nm">' + esc(t.name) + '</span><span class="badge b-' + st.cls + '"><span class="pip"></span>' + st.th + '</span></div><div class="li-sub">' + (parent?'📁 '+esc(parent):'งานอิสระ') + (t.owner?' · 👤 '+esc(t.owner):'') + (t.endDate?' · 📅 '+thDate(t.endDate):'') + '</div></div><div class="li-prog"><div class="bar"><i style="width:' + pct + '%;background:' + col + '"></i></div><span class="pct">' + pct + '%</span></div></div>'; 
+  return '<div class="li" onclick="openModal(\'task\',getItem(\'' + t.id + '\'))"><span class="li-pip" style="background:' + col + '"></span><div class="li-main"><div class="li-title"><span class="pri ' + esc(t.priority||'medium') + '"></span><span class="nm">' + esc(t.name) + '</span><span class="badge b-' + st.cls + '"><span class="pip"></span>' + st.th + '</span></div><div class="li-sub">' + (parent?'📁 '+esc(parent):'งานอิสระ') + (t.owner?' · 👤 <span class="avatar" style="background:' + getAvatarColor(t.owner) + '; width:14px; height:14px; font-size:8px; display:inline-grid; vertical-align:middle; margin-right:3px;">' + initials(t.owner) + '</span>' + esc(t.owner):'') + (t.endDate?' · 📅 '+thDate(t.endDate):'') + '</div></div><div class="li-prog"><div class="bar"><i style="width:' + pct + '%;background:' + col + '"></i></div><span class="pct">' + pct + '%</span></div></div>'; 
 }
 
 function renderUpcoming(tasks,events,today){ 
@@ -1352,8 +1360,11 @@ function renderUpcoming(tasks,events,today){
   let uhtml = '';
   upcoming.slice(0,12).forEach(u=>{ 
     const it=u.item, parts=u.date.split('-'); const tag=u.kind==='event'?'<span class="up-tag t-event">นัดหมาย</span>':u.kind==='pr'?'<span class="up-tag t-pr">รับของ</span>':'<span class="up-tag t-task">งาน</span>'; 
-    const time=u.kind==='event'&&it.startTime?'<span class="mono">' + esc(it.startTime) + '</span>':''; const owner=u.po?'🏪 ' + esc(u.po):(it.owner?'👤 ' + esc(it.owner):''); 
-    uhtml += '<div class="up-item" onclick="openModal(\'' + u.kind + '\',getItem(\'' + it.id + '\'))"><div class="up-date"><div class="d">' + parseInt(parts[2]) + '</div><div class="m">' + TH_MONTH_S[parseInt(parts[1])-1] + '</div></div><div class="up-body"><div class="nm">' + esc(it.name) + '</div><div class="meta">' + tag + time + (owner?'<span>'+owner+'</span>':'') + '</div></div></div>'; 
+    const time=u.kind==='event'&&it.startTime?'<span class="mono">' + esc(it.startTime) + '</span>':''; 
+    let ownerHtml = '';
+    if(u.po){ ownerHtml = '🏪 ' + esc(u.po); }
+    else if(it.owner){ ownerHtml = '👤 <span class="avatar" style="background:' + getAvatarColor(it.owner) + '; width:14px; height:14px; font-size:8px; display:inline-grid; vertical-align:middle; margin-right:3px;">' + initials(it.owner) + '</span>' + esc(it.owner); }
+    uhtml += '<div class="up-item" onclick="openModal(\'' + u.kind + '\',getItem(\'' + it.id + '\'))"><div class="up-date"><div class="d">' + parseInt(parts[2]) + '</div><div class="m">' + TH_MONTH_S[parseInt(parts[1])-1] + '</div></div><div class="up-body"><div class="nm">' + esc(it.name) + '</div><div class="meta">' + tag + time + (ownerHtml?'<span>'+ownerHtml+'</span>':'') + '</div></div></div>'; 
   }); 
   ul.innerHTML = uhtml;
 }
@@ -1369,7 +1380,7 @@ function kanbanBoardHTML(){
       else { 
         colProjs.forEach(p => { 
           const pct = getPct(p); 
-          body += '<div class="card" draggable="true" data-id="' + p.id + '" data-type="project" ondragstart="dragStart(event)" ondragend="dragEnd(event)" onclick="openModal(\'project\',getItem(\'' + p.id + '\'))"><div class="ctop"><span class="ctype project">โครงการ</span><span class="cname">' + esc(p.name) + '</span></div><div class="cmeta">' + (p.endDate ? '<span>📅 ' + thDate(p.endDate) + '</span>' : '') + (p.owner ? '<span class="who"><span class="avatar">' + initials(p.owner) + '</span>' + esc(p.owner) + '</span>' : '') + '</div><div class="cbar"><div class="bar"><i style="width:' + pct + '%;background:' + (COL_SWATCH[p.status]||'var(--primary)') + '"></i></div><span class="pct">' + pct + '%</span></div></div>'; 
+          body += '<div class="card" draggable="true" data-id="' + p.id + '" data-type="project" ondragstart="dragStart(event)" ondragend="dragEnd(event)" onclick="openModal(\'project\',getItem(\'' + p.id + '\'))"><div class="ctop"><span class="ctype project">โครงการ</span><span class="cname">' + esc(p.name) + '</span></div><div class="cmeta">' + (p.endDate ? '<span>📅 ' + thDate(p.endDate) + '</span>' : '') + (p.owner ? '<span class="who"><span class="avatar" style="background:' + getAvatarColor(p.owner) + '">' + initials(p.owner) + '</span>' + esc(p.owner) + '</span>' : '') + '</div><div class="cbar"><div class="bar"><i style="width:' + pct + '%;background:' + (COL_SWATCH[p.status]||'var(--primary)') + '"></i></div><span class="pct">' + pct + '%</span></div></div>'; 
         }); 
       } 
       html += '<div class="col"><div class="col-head"><span class="swatch" style="background:' + COL_SWATCH[s] + '"></span>' + STATUS[s].th + '<span class="cnt">' + colProjs.length + '</span></div><div class="col-body" data-status="' + s + '" ondragover="dragOver(event)" ondragleave="dragLeave(event)" ondrop="drop(event)">' + body + '</div></div>'; 
@@ -1377,7 +1388,7 @@ function kanbanBoardHTML(){
     return html + '</div>'; 
   } else { 
     const projectsAll = state.items.filter(i=>i.type==='project'); const pName={}, pColor={}, pOrder={}; projectsAll.forEach((p,i)=>{ pName[p.id]=p.name; pColor[p.id]=COL_SWATCH[p.status]||'var(--faint)'; pOrder[p.id]=i; }); const tasks = items.filter(i=>i.type==='task'); 
-    function taskCard(i){ const pct=getPct(i); return '<div class="card" draggable="true" data-id="' + i.id + '" data-type="task" ondragstart="dragStart(event)" ondragend="dragEnd(event)" onclick="openModal(\'task\',getItem(\'' + i.id + '\'))"><div class="ctop"><span class="pri ' + esc(i.priority||'medium') + '"></span><span class="cname">' + esc(i.name) + '</span></div><div class="cmeta">' + (i.endDate?'<span>📅 ' + thDate(i.endDate) + '</span>':'') + (i.owner?'<span class="who"><span class="avatar">' + initials(i.owner) + '</span>' + esc(i.owner) + '</span>':'') + '</div><div class="cbar"><div class="bar"><i style="width:' + pct + '%;background:' + (COL_SWATCH[i.status]||'var(--primary)') + '"></i></div><span class="pct">' + pct + '%</span></div></div>'; } 
+    function taskCard(i){ const pct=getPct(i); return '<div class="card" draggable="true" data-id="' + i.id + '" data-type="task" ondragstart="dragStart(event)" ondragend="dragEnd(event)" onclick="openModal(\'task\',getItem(\'' + i.id + '\'))"><div class="ctop"><span class="pri ' + esc(i.priority||'medium') + '"></span><span class="cname">' + esc(i.name) + '</span></div><div class="cmeta">' + (i.endDate?'<span>📅 ' + thDate(i.endDate) + '</span>':'') + (i.owner?'<span class="who"><span class="avatar" style="background:' + getAvatarColor(i.owner) + '">' + initials(i.owner) + '</span>' + esc(i.owner) + '</span>':'') + '</div><div class="cbar"><div class="bar"><i style="width:' + pct + '%;background:' + (COL_SWATCH[i.status]||'var(--primary)') + '"></i></div><span class="pct">' + pct + '%</span></div></div>'; } 
     let html='<div class="kanban">'; 
     STATUS_ORDER.forEach(s=>{ 
       const colTasks=tasks.filter(t=>(t.status||'planning')===s); const groups={}, order=[]; colTasks.forEach(t=>{ const k=(t.projectId&&pName[t.projectId])?t.projectId:'__none'; if(!groups[k]){groups[k]=[];order.push(k);} groups[k].push(t); }); order.sort((a,b)=>{ if(a==='__none')return 1; if(b==='__none')return -1; return (pOrder[a]||0)-(pOrder[b]||0); }); let body=''; 
@@ -1402,7 +1413,10 @@ function renderCalendar(){
   for(let n=0;n<total;n++){ 
     let dy,dm,dyear,other=false; if(n<startDow){ dy=prevDays-startDow+1+n; dm=m-1; dyear=y; other=true; } else if(n>=startDow+daysInMonth){ dy=n-(startDow+daysInMonth)+1; dm=m+1; dyear=y; other=true; } else { dy=n-startDow+1; dm=m; dyear=y; } 
     const iso=dyear+'-'+String(dm+1).padStart(2,'0')+'-'+String(dy).padStart(2,'0'); const isToday=iso===today; const evs=byDay[iso]||[]; evs.sort((a,b)=>(a.item.startTime||'99').localeCompare(b.item.startTime||'99')); 
-    let chips = ''; evs.slice(0,3).forEach(o=>{ const it=o.item; if(o.kind==='event') chips += '<div class="chip c-event" onclick="event.stopPropagation();openModal(\'event\',getItem(\'' + it.id + '\'))">' + (it.startTime?'<span class="tm">' + esc(it.startTime) + '</span>':'') + esc(it.name) + '</div>'; else chips += '<div class="chip c-task" onclick="event.stopPropagation();openModal(\'task\',getItem(\'' + it.id + '\'))">⚑ ' + esc(it.name) + '</div>'; }); 
+    let chips = ''; evs.slice(0,3).forEach(o=>{ const it=o.item; 
+      if(o.kind==='event') chips += '<div class="chip c-event" onclick="event.stopPropagation();openModal(\'event\',getItem(\'' + it.id + '\'))">' + (it.startTime?'<span class="tm">' + esc(it.startTime) + '</span>':'') + (it.owner?'<span class="chip-avatar" style="background:' + getAvatarColor(it.owner) + '">' + initials(it.owner) + '</span>':'') + esc(it.name) + '</div>'; 
+      else chips += '<div class="chip c-task" onclick="event.stopPropagation();openModal(\'task\',getItem(\'' + it.id + '\'))">⚑ ' + esc(it.name) + (it.owner?' <span class="chip-avatar" style="background:' + getAvatarColor(it.owner) + '">' + initials(it.owner) + '</span>':'') + '</div>'; 
+    }); 
     const more=evs.length>3?'<div style="font-size:10.5px;color:var(--muted);padding-left:4px">+' + (evs.length-3) + ' เพิ่มเติม</div>':''; 
     cells+='<div class="cal-cell ' + (other?'other':'') + ' ' + (isToday?'today':'') + '" onclick="openModal(\'event\',{startDate:\'' + iso + '\'})"><span class="dnum">' + dy + '</span><span class="addhint"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg></span><div class="chips">' + chips + more + '</div></div>'; 
   } 
