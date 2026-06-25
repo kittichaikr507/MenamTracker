@@ -1453,8 +1453,7 @@ function renderGantt(){
   const matchOwn = i => state.ovOwner === 'all' || (i.owner||'').trim() === state.ovOwner;
   
   // ✨ กรองข้อมูลตามสถานะ + owner + search
-  const projects=filtered().filter(i=>i.type==='project'&&overlaps(i.startDate,i.endDate,win.start,win.end)&&matchOwn(i)&&matchStatus(i)); 
-  const allTasks=state.items.filter(i=>i.type==='task'&&matchOwn(i)&&matchStatus(i)); 
+const projects=filtered().filter(i=>i.type==='project'&&overlaps(i.startDate,i.endDate,win.start,win.end)&&matchOwn(i)&&matchStatus(i)).sort((a, b) => (a.startDate || '9999-12-31').localeCompare(b.startDate || '9999-12-31'));  const allTasks=state.items.filter(i=>i.type==='task'&&matchOwn(i)&&matchStatus(i)); 
   const orphanTasks=filtered().filter(i=>i.type==='task'&&!i.projectId&&overlaps(i.startDate,i.endDate,win.start,win.end)&&matchOwn(i)&&matchStatus(i));
   
   // คำนวณเดือนและสัปดาห์
