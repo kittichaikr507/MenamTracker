@@ -826,14 +826,22 @@ async function api(fn, ...args) {
       return data || [];
     }
     
-    if (fn === 'saveItem') {
+   if (fn === 'saveItem') {
       const item = args[0];
-      if (!item.id) item.id = 'ID_' + Date.now();
       item.progress = Number(item.progress) || 0;
-      
-      const { data, error } = await db.from(TABLE_NAME).upsert(item).select();
-      if (error) throw error;
-      return { success: true, id: item.id };
+
+      if (!item.id) {
+        // กรณีสร้างใหม่ (ยังไม่มี id) ให้สร้าง ID ใหม่และใช้คำสั่ง insert
+        item.id = 'ID_' + Date.now();
+        const { data, error } = await db.from(TABLE_NAME).insert(item).select();
+        if (error) throw error;
+        return { success: true, id: item.id };
+      } else {
+        // กรณีแก้ไข (มี id เดิมอยู่แล้ว) ให้ใช้คำสั่ง update และอ้างอิงพอยต์ไปที่ id นั้น
+        const { data, error } = await db.from(TABLE_NAME).update(item).eq('id', item.id).select();
+        if (error) throw error;
+        return { success: true, id: item.id };
+      }
     }
     
     if (fn === 'updateStatus') {
