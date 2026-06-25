@@ -601,7 +601,7 @@
       <h3 id="detailsTitle">รายละเอียด</h3>
       <button class="icon-btn" onclick="closeDetails()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
-    <div class="modal-body" id="detailsList" style="padding: 0; max-height: 60vh; overflow-y: auto;"></div>
+   <div class="modal-body" id="detailsList"></div>
   </div>
 </div>
 
@@ -1081,8 +1081,8 @@ function openDetails(type, filterMode) {
           const dateStr = item.endDate ? '📅 กำหนดส่ง: ' + thDate(item.endDate) : '📅 ไม่มีกำหนด';
           const over = (item.endDate && item.endDate < today && item.status !== 'completed') ? '<span style="color:var(--danger);font-size:11.5px;font-weight:600;margin-left:6px;">(เกินกำหนด)</span>' : '';
           
-          dhtml += '<div class="details-row" onclick="closeDetails(); openModal(\'' + type + '\', getItem(\'' + item.id + '\'))">';
-          dhtml += '<span class="li-pip" style="background:' + col + '"></span>';
+        dhtml += '<div class="li" onclick="closeDetails(); openModal(\'' + type + '\', getItem(\'' + item.id + '\'))">';
+        dhtml += '<span class="li-pip" style="background:' + col + '"></span>';
           dhtml += '<div class="li-main">';
           dhtml += '<div class="li-title"><span class="nm" style="font-size:14.5px;">' + esc(item.name) + '</span><span class="badge b-' + st.cls + '" style="transform:scale(0.85);transform-origin:left;"><span class="pip"></span>' + st.th + '</span></div>';
           dhtml += '<div class="li-sub" style="margin-top:4px;">' + (item.owner ? '👤 ' + esc(item.owner) + ' · ' : '') + dateStr + over + '</div>';
