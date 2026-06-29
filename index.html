@@ -932,34 +932,16 @@ function ganttDrop(e, targetId) {
 
 // ฟังก์ชันช่วย save ลำดับลง DB
 async function saveGanttOrder() {
-    // กรองเอาเฉพาะ Task มาเรียงเลขใหม่ (1, 2, 3...)
-    // หรือจะเรียงทั้ง Project และ Task ก็ได้ แต่ปกติ Task จะเรียงตาม Project
-    // ที่นี่ผมจะสมมติว่าเรียงตาม state.items เลย
-    
-    const updates = state.items.map((item, index) => {
-        return { id: item.id, sort_order: index };
-    });
-
-    // Supabase upsert/update แบบ batch (ถ้ามี) หรือวนลูป
-    // วิธีที่ง่ายและชัวร์ที่สุดสำหรับโค้ดนี้คือวนลูป update
-    // หมายเหตุ: การ update ทีละตัวอาจจะช้าถ้าข้อมูลเยอะมาก (เป็นร้อยๆ)
-    
-    // เพื่อความลื่นไหล เราอาจจะไม่รอ Promise ทั้งหมดก็ได้ (Fire and forget) 
-    // หรือใช้ Promise.all
-    /* 
     try {
-        const promises = updates.map(u => db.from('menam-data').update({ sort_order: u.sort_order }).eq('id', u.id));
+        // วนลูป update sort_order ของทุก item ใน state.items
+        const promises = state.items.map((item, index) => {
+            return db.from(TABLE_NAME).update({ sort_order: index }).eq('id', item.id);
+        });
         await Promise.all(promises);
-        toast('บันทึกลำดับแล้ว', 'ok');
+        console.log('บันทึกเรียงลำดับสำเร็จ');
     } catch(e) {
-        console.error('Save order failed', e);
+        console.error('บันทึกเรียงลำดับล้มเหลว', e);
     }
-    */
-   
-   // *ทางเลือกที่ดีกว่า:* แค่ update ตัวที่เปลี่ยน 2 ตัว (จาก และ ไป) ก็พอ 
-   // แต่เพื่อให้โค้ดง่าย ผมแนะนำให้ใช้วิธีข้างบน (Update ทั้งหมด) หรือเพิ่ม Logic ที่ซับซ้อนกว่านี้
-   // สำหรับตัวอย่างนี้ ผมจะข้ามการ save แบบละเอียดไปก่อน เพราะโค้ดเดิม save ทีละตัว
-   // **สำคัญ:** ต้องแก้ฟังก์ชัน load() ให้ sort ตาม sort_order ด้วย (ดูข้อ 4)
 }
 
 let prEditId=null, prLines=[], prPoDates={};
@@ -1645,21 +1627,20 @@ const projects=filtered().filter(i=>i.type==='project'&&overlaps(i.startDate,i.e
     rows+='<div class="g-row proj"><div class="g-label" onclick="toggleGantt(\'' + p.id + '\')"><svg class="g-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.5" style="transform:rotate(' + (collapsed?0:90) + 'deg)"><path d="m9 18 6-6-6-6"/></svg><span class="g-pip" style="background:' + (COL_SWATCH[p.status]||'var(--faint)') + '"></span><span class="g-nm" onclick="event.stopPropagation();openModal(\'project\',getItem(\'' + p.id + '\'))">' + esc(p.name) + '</span><span class="g-pct">' + pct + '%</span></div>' + bar(p) + '</div>'; 
     if(!collapsed){ 
       if(!tks.length) rows+='<div class="g-row task"><div class="g-label sub"><span class="g-subnote">ไม่มีงานย่อยในช่วงนี้</span></div><div class="g-track" style="background-image:' + trackBg + '"></div></div>'; 
- tks.forEach(t=>{ 
-    const tp=getPct(t); 
-    // เพิ่ม draggable, ondragstart, ondragend, ondragover, ondrop
-    rows+='<div class="g-row task" draggable="true" data-id="'+t.id+'" ondragstart="ganttDragStart(event, \''+t.id+'\')" ondragend="ganttDragEnd(event)" ondragover="ganttDragOver(event)" ondrop="ganttDrop(event, \''+t.id+'\')" style="cursor:grab"><div class="g-label sub" onclick="openModal(\'task\',getItem(\'' + t.id + '\'))">...
-      }); 
+ tks.forEach(t=>{
+    const tp=getPct(t);
+    rows+='<div class="g-row task" draggable="true" data-id="'+t.id+'" ondragstart="ganttDragStart(event, \''+t.id+'\')" ondragend="ganttDragEnd(event)" ondragover="ganttDragOver(event)" ondrop="ganttDrop(event, \''+t.id+'\')" style="cursor:grab"><div class="g-label sub" onclick="openModal(\'task\',getItem(\'' + t.id + '\'))"><span class="pri ' + esc(t.priority||'medium') + '"></span><span class="g-nm">' + esc(t.name) + '</span><span class="g-pct sub">' + tp + '%</span></div>' + bar(t) + '</div>';
+});
     } 
   });
   
   if(orphanTasks.length){ 
     const collapsed = state.ganttCollapsed['__orphan'] !== false; // default true (ยุบ) ถ้ายังไม่ได้ตั้งค่า
     rows+='<div class="g-row proj"><div class="g-label" onclick="toggleGantt(\'__orphan\')"><svg class="g-chev" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--faint)" stroke-width="2.5" style="transform:rotate(' + (collapsed?0:90) + 'deg)"><path d="m9 18 6-6-6-6"/></svg><span class="g-pip" style="background:var(--faint)"></span><span class="g-nm">งานอิสระ (ไม่อยู่ในโครงการ)</span><span class="g-pct">' + orphanTasks.length + '</span></div><div class="g-track" style="background-image:' + trackBg + '"></div></div>'; 
-    if(!collapsed) orphanTasks.forEach(t=>{ 
-    const tp=getPct(t); 
-    rows+='<div class="g-row task" draggable="true" data-id="'+t.id+'" ondragstart="ganttDragStart(event, \''+t.id+'\')" ondragend="ganttDragEnd(event)" ondragover="ganttDragOver(event)" ondrop="ganttDrop(event, \''+t.id+'\')" style="cursor:grab"><div class="g-label sub" onclick="openModal(\'task\',getItem(\'' + t.id + '\'))">...
-    }); 
+  if(!collapsed) orphanTasks.forEach(t=>{
+    const tp=getPct(t);
+    rows+='<div class="g-row task" draggable="true" data-id="'+t.id+'" ondragstart="ganttDragStart(event, \''+t.id+'\')" ondragend="ganttDragEnd(event)" ondragover="ganttDragOver(event)" ondrop="ganttDrop(event, \''+t.id+'\')" style="cursor:grab"><div class="g-label sub" onclick="openModal(\'task\',getItem(\'' + t.id + '\'))"><span class="pri ' + esc(t.priority||'medium') + '"></span><span class="g-nm">' + esc(t.name) + '</span><span class="g-pct sub">' + tp + '%</span></div>' + bar(t) + '</div>';
+});
   }
   
   if(!projects.length && !orphanTasks.length) rows=emptyBox('ไม่มีโครงการในช่วงเวลานี้');
